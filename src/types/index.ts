@@ -5,6 +5,7 @@ export type Customer = {
   phone: string;
   nik: string;
   roomNumber?: string;
+  lastPaymentDate?: string;
 };
 
 export type Transaction = {

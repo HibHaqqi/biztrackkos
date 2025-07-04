@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Customer } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,36 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { CustomerFormDialog } from "./customer-form-dialog";
+
+const MonthsOccupied = ({ entryDate }: { entryDate: string }) => {
+  const [months, setMonths] = useState(0);
+
+  useEffect(() => {
+    if (!entryDate) {
+      setMonths(0);
+      return;
+    }
+    const start = new Date(entryDate);
+    const now = new Date();
+
+    if (isNaN(start.getTime())) {
+      setMonths(0);
+      return;
+    }
+
+    let calculatedMonths = (now.getFullYear() - start.getFullYear()) * 12;
+    calculatedMonths -= start.getMonth();
+    calculatedMonths += now.getMonth();
+
+    setMonths(calculatedMonths <= 0 ? 1 : calculatedMonths + 1);
+  }, [entryDate]);
+
+  if (!months) {
+      return <>-</>;
+  }
+
+  return <>{months}</>;
+};
 
 export function CustomerList({ customers: initialCustomers }: { customers: Customer[] }) {
   const [customers, setCustomers] = useState(initialCustomers);
@@ -66,8 +96,9 @@ export function CustomerList({ customers: initialCustomers }: { customers: Custo
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Phone</TableHead>
-                  <TableHead>NIK</TableHead>
                   <TableHead>Entry Date</TableHead>
+                  <TableHead>Last Payment</TableHead>
+                  <TableHead>Months Occupied</TableHead>
                   <TableHead>Room</TableHead>
                   <TableHead><span className="sr-only">Actions</span></TableHead>
                 </TableRow>
@@ -77,8 +108,9 @@ export function CustomerList({ customers: initialCustomers }: { customers: Custo
                   <TableRow key={customer.id}>
                     <TableCell className="font-medium">{customer.name}</TableCell>
                     <TableCell>{customer.phone}</TableCell>
-                    <TableCell>{customer.nik}</TableCell>
                     <TableCell>{customer.entryDate}</TableCell>
+                    <TableCell>{customer.lastPaymentDate || 'N/A'}</TableCell>
+                    <TableCell><MonthsOccupied entryDate={customer.entryDate} /></TableCell>
                     <TableCell>{customer.roomNumber || 'N/A'}</TableCell>
                     <TableCell>
                       <DropdownMenu>
