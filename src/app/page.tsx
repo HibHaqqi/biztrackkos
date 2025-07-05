@@ -1,5 +1,4 @@
 import { StatCard } from '@/components/dashboard/stat-card';
-import { customers, transactions } from '@/lib/data';
 import { DollarSign, Users, TrendingUp, TrendingDown } from 'lucide-react';
 import {
   Card,
@@ -19,26 +18,19 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/layout/page-header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { getDashboardData } from './dashboard.logic';
 
 export default function DashboardPage() {
-  const totalRevenue = transactions
-    .filter((t) => t.type === 'revenue')
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const totalExpenses = transactions
-    .filter((t) => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const occupiedRooms = customers.filter((c) => c.roomNumber).length;
-  const totalRooms = 10; // Assuming 10 rooms total for occupancy calculation
-  const occupancyRate = totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0;
-
-  const recentTransactions = [...transactions]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
-  const recentCustomers = [...customers]
-    .sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime())
-    .slice(0, 5);
+  const {
+    totalRevenue,
+    totalExpenses,
+    occupiedRooms,
+    totalRooms,
+    occupancyRate,
+    recentTransactions,
+    recentCustomers,
+    customers,
+  } = getDashboardData();
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
