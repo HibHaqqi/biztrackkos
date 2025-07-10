@@ -1,33 +1,25 @@
-import sql from '@/lib/db';
 import type { Customer } from "@/types";
+import { customers, transactions } from '@/lib/data';
 import { format } from 'date-fns';
 
 export async function getCustomersData(): Promise<Customer[]> {
-  if (!sql) {
-    console.log("Database not configured. Returning empty customer list.");
-    return [];
-  }
-  const customers = await sql<any[]>`SELECT * FROM "Customer" ORDER BY name ASC`;
-
-  const transactions = await sql<any[]>`SELECT * FROM "Transaction" WHERE type = 'revenue' ORDER BY date DESC`;
-
   const customersWithLastPayment = customers.map(customer => {
     if (!customer.roomNumber) {
       return {
         ...customer,
-        id: String(customer.id),
         entryDate: format(new Date(customer.entryDate), 'yyyy-MM-dd'),
       };
     }
     
-    const lastPayment = transactions.find(t => t.roomNumber === customer.roomNumber);
+    const lastPayment = transactions
+      .filter(t => t.type === 'revenue' && t.roomNumber === customer.roomNumber)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
     return {
       ...customer,
-      id: String(customer.id),
       entryDate: format(new Date(customer.entryDate), 'yyyy-MM-dd'),
       lastPaymentDate: lastPayment ? format(new Date(lastPayment.date), 'yyyy-MM-dd') : undefined,
     };
   });
-  return customersWithLastPayment as Customer[];
+  return customersWithLastPayment;
 }

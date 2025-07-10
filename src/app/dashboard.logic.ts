@@ -1,46 +1,38 @@
-import sql from '@/lib/db';
+import { customers, transactions } from '@/lib/data';
 
 export async function getDashboardData() {
-    if (!sql) {
-        console.log("Database not configured. Returning empty dashboard data.");
-        return {
-            totalRevenue: 0,
-            totalExpenses: 0,
-            occupiedRooms: 0,
-            totalRooms: 10,
-            occupancyRate: 0,
-            recentTransactions: [],
-            recentCustomers: [],
-            customersCount: 0,
-        };
-    }
-    const totalRevenueResult = await sql`SELECT SUM(amount) FROM "Transaction" WHERE type = 'revenue'`;
-    const totalRevenue = totalRevenueResult[0]?.sum || 0;
+  const totalRevenue = transactions
+    .filter(t => t.type === 'revenue')
+    .reduce((sum, t) => sum + t.amount, 0);
 
-    const totalExpensesResult = await sql`SELECT SUM(amount) FROM "Transaction" WHERE type = 'expense'`;
-    const totalExpenses = totalExpensesResult[0]?.sum || 0;
+  const totalExpenses = transactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0);
 
-    const occupiedRoomsCountResult = await sql`SELECT COUNT(*) FROM "Customer" WHERE "roomNumber" IS NOT NULL`;
-    const occupiedRoomsCount = occupiedRoomsCountResult[0]?.count || 0;
+  const occupiedRoomsCount = customers.filter(c => c.roomNumber).length;
+  const totalRooms = 10;
+  const occupancyRate = totalRooms > 0 ? (occupiedRoomsCount / totalRooms) * 100 : 0;
 
-    const totalRooms = 10; // Assuming 10 rooms total for occupancy calculation
-    const occupancyRate = totalRooms > 0 ? (Number(occupiedRoomsCount) / totalRooms) * 100 : 0;
+  const recentTransactions = [...transactions]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 5)
+    .map(t => ({ ...t, date: new Date(t.date).toISOString().split('T')[0] }));
     
-    const recentTransactions = await sql`SELECT * FROM "Transaction" ORDER BY date DESC LIMIT 5`;
+  const recentCustomers = [...customers]
+    .sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime())
+    .slice(0, 5)
+    .map(c => ({ ...c, entryDate: new Date(c.entryDate).toISOString().split('T')[0] }));
 
-    const recentCustomers = await sql`SELECT * FROM "Customer" ORDER BY "entryDate" DESC LIMIT 5`;
-    
-    const customersCountResult = await sql`SELECT COUNT(*) FROM "Customer"`;
-    const customersCount = customersCountResult[0]?.count || 0;
+  const customersCount = customers.length;
 
-    return {
-        totalRevenue: Number(totalRevenue),
-        totalExpenses: Number(totalExpenses),
-        occupiedRooms: Number(occupiedRoomsCount),
-        totalRooms,
-        occupancyRate,
-        recentTransactions: recentTransactions.map(t => ({...t, amount: Number(t.amount), date: new Date(t.date).toISOString().split('T')[0]})),
-        recentCustomers: recentCustomers.map(c => ({...c, entryDate: new Date(c.entryDate).toISOString().split('T')[0]})),
-        customersCount: Number(customersCount),
-    };
+  return {
+    totalRevenue,
+    totalExpenses,
+    occupiedRooms: occupiedRoomsCount,
+    totalRooms,
+    occupancyRate,
+    recentTransactions,
+    recentCustomers,
+    customersCount,
+  };
 }

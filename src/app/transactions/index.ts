@@ -1,10 +1,6 @@
-import sql from '@/lib/db';
+import { transactions } from '@/lib/data';
+import type { Transaction } from '@/types';
 
-export async function getTransactionsData() {
-    if (!sql) {
-        console.log("Database not configured. Returning empty transaction list.");
-        return [];
-    }
-    const results = await sql<any[]>`SELECT * FROM "Transaction" ORDER BY date DESC`;
-    return results.map(t => ({...t, amount: Number(t.amount)}));
+export async function getTransactionsData(): Promise<Transaction[]> {
+    return JSON.parse(JSON.stringify(transactions));
 }

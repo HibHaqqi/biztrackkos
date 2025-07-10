@@ -1,7 +1,8 @@
 'use server';
 
-import sql from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { customers, transactions } from '@/lib/data';
+import type { Transaction } from '@/types';
 
 export async function addTransaction(data: {
   type: 'revenue' | 'expense';
@@ -11,28 +12,28 @@ export async function addTransaction(data: {
   category?: string;
   roomNumber?: string;
 }) {
-  if (!sql) {
-    console.log("Database not configured. Skipping addTransaction.");
-    revalidatePath('/transactions');
-    revalidatePath('/');
-    revalidatePath('/customers');
-    return;
-  }
-
   const { type, amount, date, description, category, roomNumber } = data;
 
-  let customerName = null;
+  let customerName: string | undefined = undefined;
   if (type === 'revenue' && roomNumber) {
-    const customerResult = await sql`SELECT name FROM "Customer" WHERE "roomNumber" = ${roomNumber}`;
-    if (customerResult.length > 0) {
-      customerName = customerResult[0].name;
+    const customer = customers.find(c => c.roomNumber === roomNumber);
+    if (customer) {
+      customerName = customer.name;
     }
   }
 
-  await sql`
-    INSERT INTO "Transaction" (type, amount, date, description, category, "roomNumber", "customerName")
-    VALUES (${type}, ${amount}, ${new Date(date)}, ${description}, ${type === 'expense' ? category : null}, ${type === 'revenue' ? roomNumber : null}, ${customerName})
-  `;
+  const newTransaction: Transaction = {
+    id: String(transactions.length + 1),
+    type,
+    amount,
+    date,
+    description,
+    category: type === 'expense' ? category : undefined,
+    roomNumber: type === 'revenue' ? roomNumber : undefined,
+    customerName,
+  };
+
+  transactions.push(newTransaction);
   
   revalidatePath('/transactions');
   revalidatePath('/');

@@ -1,45 +1,28 @@
 'use server';
 
-import { getIronSession } from 'iron-session';
 import { cookies } from 'next/headers';
-import sql from '@/lib/db';
-import bcrypt from 'bcryptjs';
-import { SessionData, sessionOptions } from '@/lib/session';
+
+const FAKE_USER = {
+  email: 'admin@example.com',
+  password: 'password',
+};
 
 export async function login(formData: { email: string, password: string }): Promise<string | null> {
   const { email, password } = formData;
 
-  if (!sql) {
-    return 'Database not configured.';
-  }
-
-  try {
-    const users = await sql`SELECT * FROM "User" WHERE email = ${email}`;
-    const user = users[0];
-
-    if (!user) {
-      return 'Invalid email or password.';
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return 'Invalid email or password.';
-    }
-
-    const session = await getIronSession<SessionData>(cookies(), sessionOptions);
-    session.userId = user.id;
-    session.isLoggedIn = true;
-    await session.save();
-
+  if (email === FAKE_USER.email && password === FAKE_USER.password) {
+    cookies().set('session', 'true', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7, // One week
+      path: '/',
+    });
     return null;
-  } catch (error) {
-    console.error('Login error:', error);
-    return 'An unexpected error occurred.';
   }
+
+  return 'Invalid email or password.';
 }
 
 export async function logout() {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
-  session.destroy();
+  cookies().set('session', '', { expires: new Date(0) });
 }
