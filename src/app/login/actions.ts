@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 
 const FAKE_USER = {
   email: 'admin@example.com',
@@ -17,6 +18,8 @@ export async function login(formData: { email: string, password: string }): Prom
       maxAge: 60 * 60 * 24 * 7, // One week
       path: '/',
     });
+    // Revalidate the root path to ensure the layout re-renders with the new session
+    revalidatePath('/', 'layout');
     return null;
   }
 
