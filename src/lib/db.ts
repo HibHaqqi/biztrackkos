@@ -1,5 +1,4 @@
 import postgres from 'postgres';
-import 'dotenv/config';
 
 let sql: postgres.Sql | null = null;
 
