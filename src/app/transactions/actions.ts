@@ -1,7 +1,6 @@
-
 'use server';
 
-import prisma from '@/lib/prisma';
+import sql from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 
 export async function addTransaction(data: {
@@ -14,24 +13,18 @@ export async function addTransaction(data: {
 }) {
   const { type, amount, date, description, category, roomNumber } = data;
 
-  const transactionData: any = {
-    type,
-    amount,
-    date: new Date(date),
-    description,
-  };
-
+  let customerName = null;
   if (type === 'revenue' && roomNumber) {
-    const customer = await prisma.customer.findFirst({ where: { roomNumber } });
-    if (customer) {
-      transactionData.customerName = customer.name;
-      transactionData.roomNumber = roomNumber;
+    const customerResult = await sql`SELECT name FROM "Customer" WHERE "roomNumber" = ${roomNumber}`;
+    if (customerResult.length > 0) {
+      customerName = customerResult[0].name;
     }
-  } else if (type === 'expense') {
-    transactionData.category = category;
   }
 
-  await prisma.transaction.create({ data: transactionData });
+  await sql`
+    INSERT INTO "Transaction" (type, amount, date, description, category, "roomNumber", "customerName")
+    VALUES (${type}, ${amount}, ${new Date(date)}, ${description}, ${type === 'expense' ? category : null}, ${type === 'revenue' ? roomNumber : null}, ${customerName})
+  `;
   
   revalidatePath('/transactions');
   revalidatePath('/');

@@ -1,23 +1,18 @@
-import prisma from '@/lib/prisma';
+import sql from '@/lib/db';
 import type { Customer } from "@/types";
+import { format } from 'date-fns';
 
 export async function getCustomersData(): Promise<Customer[]> {
-  const customers = await prisma.customer.findMany({
-    orderBy: {
-      name: 'asc'
-    }
-  });
+  const customers = await sql<any[]>`SELECT * FROM "Customer" ORDER BY name ASC`;
 
-  const transactions = await prisma.transaction.findMany({
-    where: { type: 'revenue' },
-    orderBy: { date: 'desc' }
-  });
+  const transactions = await sql<any[]>`SELECT * FROM "Transaction" WHERE type = 'revenue' ORDER BY date DESC`;
 
   const customersWithLastPayment = customers.map(customer => {
     if (!customer.roomNumber) {
       return {
         ...customer,
-        entryDate: customer.entryDate.toISOString().split('T')[0],
+        id: String(customer.id),
+        entryDate: format(new Date(customer.entryDate), 'yyyy-MM-dd'),
       };
     }
     
@@ -25,9 +20,10 @@ export async function getCustomersData(): Promise<Customer[]> {
 
     return {
       ...customer,
-      entryDate: customer.entryDate.toISOString().split('T')[0],
-      lastPaymentDate: lastPayment?.date.toISOString().split('T')[0],
+      id: String(customer.id),
+      entryDate: format(new Date(customer.entryDate), 'yyyy-MM-dd'),
+      lastPaymentDate: lastPayment ? format(new Date(lastPayment.date), 'yyyy-MM-dd') : undefined,
     };
   });
-  return customersWithLastPayment;
+  return customersWithLastPayment as Customer[];
 }
