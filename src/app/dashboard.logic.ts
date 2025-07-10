@@ -1,14 +1,27 @@
 import sql from '@/lib/db';
 
 export async function getDashboardData() {
+    if (!sql) {
+        console.log("Database not configured. Returning empty dashboard data.");
+        return {
+            totalRevenue: 0,
+            totalExpenses: 0,
+            occupiedRooms: 0,
+            totalRooms: 10,
+            occupancyRate: 0,
+            recentTransactions: [],
+            recentCustomers: [],
+            customersCount: 0,
+        };
+    }
     const totalRevenueResult = await sql`SELECT SUM(amount) FROM "Transaction" WHERE type = 'revenue'`;
-    const totalRevenue = totalRevenueResult[0].sum || 0;
+    const totalRevenue = totalRevenueResult[0]?.sum || 0;
 
     const totalExpensesResult = await sql`SELECT SUM(amount) FROM "Transaction" WHERE type = 'expense'`;
-    const totalExpenses = totalExpensesResult[0].sum || 0;
+    const totalExpenses = totalExpensesResult[0]?.sum || 0;
 
     const occupiedRoomsCountResult = await sql`SELECT COUNT(*) FROM "Customer" WHERE "roomNumber" IS NOT NULL`;
-    const occupiedRoomsCount = occupiedRoomsCountResult[0].count;
+    const occupiedRoomsCount = occupiedRoomsCountResult[0]?.count || 0;
 
     const totalRooms = 10; // Assuming 10 rooms total for occupancy calculation
     const occupancyRate = totalRooms > 0 ? (Number(occupiedRoomsCount) / totalRooms) * 100 : 0;
@@ -18,7 +31,7 @@ export async function getDashboardData() {
     const recentCustomers = await sql`SELECT * FROM "Customer" ORDER BY "entryDate" DESC LIMIT 5`;
     
     const customersCountResult = await sql`SELECT COUNT(*) FROM "Customer"`;
-    const customersCount = customersCountResult[0].count;
+    const customersCount = customersCountResult[0]?.count || 0;
 
     return {
         totalRevenue: Number(totalRevenue),

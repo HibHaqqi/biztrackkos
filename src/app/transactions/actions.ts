@@ -11,6 +11,14 @@ export async function addTransaction(data: {
   category?: string;
   roomNumber?: string;
 }) {
+  if (!sql) {
+    console.log("Database not configured. Skipping addTransaction.");
+    revalidatePath('/transactions');
+    revalidatePath('/');
+    revalidatePath('/customers');
+    return;
+  }
+
   const { type, amount, date, description, category, roomNumber } = data;
 
   let customerName = null;

@@ -3,6 +3,10 @@ import type { Customer } from "@/types";
 import { format } from 'date-fns';
 
 export async function getCustomersData(): Promise<Customer[]> {
+  if (!sql) {
+    console.log("Database not configured. Returning empty customer list.");
+    return [];
+  }
   const customers = await sql<any[]>`SELECT * FROM "Customer" ORDER BY name ASC`;
 
   const transactions = await sql<any[]>`SELECT * FROM "Transaction" WHERE type = 'revenue' ORDER BY date DESC`;

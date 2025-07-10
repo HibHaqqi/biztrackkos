@@ -1,10 +1,12 @@
 import postgres from 'postgres';
 import 'dotenv/config';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL is not set');
-}
+let sql: postgres.Sql | null = null;
 
-const sql = postgres(process.env.DATABASE_URL);
+if (process.env.DATABASE_URL) {
+  sql = postgres(process.env.DATABASE_URL);
+} else {
+  console.warn("DATABASE_URL environment variable is not set. Database queries will be disabled.");
+}
 
 export default sql;
