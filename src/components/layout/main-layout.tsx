@@ -4,7 +4,7 @@ import { LogoutButton } from "./logout-button";
 import { headers } from 'next/headers';
 import { cookies } from "next/headers";
 
-export function MainLayout({ children }: { children: React.ReactNode }) {
+export async function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = headers().get('x-next-pathname') || '';
   const session = cookies().get('session');
   
