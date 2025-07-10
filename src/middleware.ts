@@ -3,19 +3,24 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get('session');
-  const isLoggedIn = sessionCookie && sessionCookie.value === 'true';
+  const isLoggedIn = sessionCookie?.value === 'true';
   
   const { pathname } = request.nextUrl;
 
   const isApiRoute = pathname.startsWith('/api');
   const isLoginPage = pathname === '/login';
   
-  // Allow API key access for external services
   if (isApiRoute) {
     const apiKey = request.headers.get('x-api-key');
     if (apiKey && apiKey === process.env.API_KEY) {
       return NextResponse.next();
     }
+    // If it's an API route and not the login API, and the user is not logged in, deny access
+    // This assumes API routes other than login require auth.
+    if (!isLoggedIn) {
+       return new NextResponse('Authentication required', { status: 401 });
+    }
+    return NextResponse.next();
   }
 
   if (!isLoggedIn && !isLoginPage) {
@@ -26,7 +31,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  return NextResponse.next();
+  // Pass the pathname in a header so client components can access it.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-next-pathname', request.nextUrl.pathname);
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {

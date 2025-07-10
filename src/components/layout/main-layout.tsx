@@ -2,11 +2,14 @@ import { SidebarProvider, Sidebar, SidebarInset, SidebarFooter } from "@/compone
 import { SidebarNav } from "./sidebar-nav";
 import { cookies } from "next/headers";
 import { LogoutButton } from "./logout-button";
+import { headers } from 'next/headers';
 
-export async function MainLayout({ children }: { children: React.ReactNode }) {
+export function MainLayout({ children }: { children: React.ReactNode }) {
+  const pathname = headers().get('x-next-pathname') || '';
   const session = cookies().get('session');
   
-  if (!session || !session.value) {
+  // Don't show the sidebar on the login page.
+  if (pathname === '/login' || !session?.value) {
     return <>{children}</>;
   }
   
