@@ -1,8 +1,8 @@
 import { SidebarProvider, Sidebar, SidebarInset, SidebarFooter } from "@/components/ui/sidebar";
 import { SidebarNav } from "./sidebar-nav";
-import { cookies } from "next/headers";
 import { LogoutButton } from "./logout-button";
 import { headers } from 'next/headers';
+import { cookies } from "next/headers";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = headers().get('x-next-pathname') || '';
