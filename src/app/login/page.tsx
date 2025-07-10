@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -47,7 +48,8 @@ export default function LoginPage() {
           description: error,
         });
       } else {
-        router.push('/');
+        // A full redirect forces the server/middleware to re-evaluate the session.
+        window.location.href = '/';
       }
     });
   }
