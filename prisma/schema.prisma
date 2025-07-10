@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "rhel-openssl-1.1.x"]
 }
 
 datasource db {
@@ -11,25 +12,21 @@ datasource db {
 }
 
 model Customer {
-  id        String      @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
-  entryDate DateTime
   phone     String
-  nik       String      @unique
+  nik       String   @unique
+  entryDate DateTime @default(now())
   roomNumber String?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
 }
 
 model Transaction {
-  id          String    @id @default(cuid())
-  type        String // "revenue" or "expense"
-  amount      Float
-  date        DateTime
-  description String
-  category    String?
-  roomNumber  String?
+  id           String    @id @default(cuid())
+  type         String // "revenue" or "expense"
+  amount       Float
+  date         DateTime
+  description  String
+  category     String?
+  roomNumber   String?
   customerName String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
 }
