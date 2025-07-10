@@ -108,7 +108,7 @@ export function CustomerFormDialog({ isOpen, onOpenChange, customer }: CustomerF
                 <FormItem>
                   <FormLabel>Phone</FormLabel>
                   <FormControl>
-                    <Input placeholder="123-456-7890" {...field} />
+                    <Input type="tel" placeholder="123-456-7890" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -164,3 +164,5 @@ export function CustomerFormDialog({ isOpen, onOpenChange, customer }: CustomerF
     </Dialog>
   );
 }
+
+    
