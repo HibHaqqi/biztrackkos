@@ -3,7 +3,7 @@
 
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-1.1.x", "rhel-openssl-1.1.x"]
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -12,21 +12,28 @@ datasource db {
 }
 
 model Customer {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String
-  nik       String   @unique
-  entryDate DateTime @default(now())
-  roomNumber String?
+  id          String    @id @default(cuid())
+  name        String
+  entryDate   DateTime
+  phone       String
+  nik         String    @unique
+  roomNumber  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  transactions Transaction[]
 }
 
 model Transaction {
-  id           String    @id @default(cuid())
-  type         String // "revenue" or "expense"
-  amount       Float
-  date         DateTime
-  description  String
-  category     String?
-  roomNumber   String?
-  customerName String?
+  id          String    @id @default(cuid())
+  type        String // "revenue" or "expense"
+  amount      Float
+  date        DateTime
+  description String
+  category    String? // for expenses
+  roomNumber  String?   // for revenue
+  customerName String?  // for revenue
+  customer    Customer? @relation(fields: [customerId], references: [id])
+  customerId  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

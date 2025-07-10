@@ -1,0 +1,25 @@
+diff --git a/node_modules/@prisma/client/scripts/default-index.js b/node_modules/@prisma/client/scripts/default-index.js
+index b89e682..8d867c4 100644
+--- a/node_modules/@prisma/client/scripts/default-index.js
++++ b/node_modules/@prisma/client/scripts/default-index.js
+@@ -23,7 +23,7 @@
+ }
+ 
+ function getPrismaClient(config) {
+-  const envValue = getPrismaClientEnvValue()
++  const envValue = "library"
+   const platform = getPlatform()
+   const enginePath = getEnginePath(config.generator, platform)
+ 
+diff --git a/node_modules/@prisma/client/package.json b/node_modules/@prisma/client/package.json
+index 19b35b4..e43c8d3 100644
+--- a/node_modules/@prisma/client/package.json
++++ b/node_modules/@prisma/client/package.json
+@@ -1,5 +1,6 @@
+ {
+   "name": "@prisma/client",
++  "version": "5.17.0",
+   "description": "Prisma Client is a modern and expressive ORM for Node.js and TypeScript. It makes database access easy with an auto-generated and type-safe query builder that's tailored to your database schema.",
+   "main": "index.js",
+   "types": "index.d.ts",
+
