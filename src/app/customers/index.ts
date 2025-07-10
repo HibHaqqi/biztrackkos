@@ -1,19 +1,33 @@
-import { customers as initialCustomers, transactions } from "@/lib/data";
+import prisma from '@/lib/prisma';
 import type { Customer } from "@/types";
 
-export function getCustomersData(): Customer[] {
-    const customersWithLastPayment = initialCustomers.map(customer => {
-        if (!customer.roomNumber) {
-          return customer;
-        }
-        
-        const customerTransactions = transactions
-        .filter(t => t.type === 'revenue' && t.roomNumber === customer.roomNumber)
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+export async function getCustomersData(): Promise<Customer[]> {
+  const customers = await prisma.customer.findMany({
+    orderBy: {
+      name: 'asc'
+    }
+  });
 
-        const lastPaymentDate = customerTransactions.length > 0 ? customerTransactions[0].date : undefined;
-        
-        return { ...customer, lastPaymentDate };
-    });
-    return customersWithLastPayment;
+  const transactions = await prisma.transaction.findMany({
+    where: { type: 'revenue' },
+    orderBy: { date: 'desc' }
+  });
+
+  const customersWithLastPayment = customers.map(customer => {
+    if (!customer.roomNumber) {
+      return {
+        ...customer,
+        entryDate: customer.entryDate.toISOString().split('T')[0],
+      };
+    }
+    
+    const lastPayment = transactions.find(t => t.roomNumber === customer.roomNumber);
+
+    return {
+      ...customer,
+      entryDate: customer.entryDate.toISOString().split('T')[0],
+      lastPaymentDate: lastPayment?.date.toISOString().split('T')[0],
+    };
+  });
+  return customersWithLastPayment;
 }

@@ -1,33 +1,60 @@
-import { customers, transactions } from "@/lib/data";
+import prisma from '@/lib/prisma';
 
-export function getDashboardData() {
-    const totalRevenue = transactions
-        .filter((t) => t.type === 'revenue')
-        .reduce((sum, t) => sum + t.amount, 0);
+export async function getDashboardData() {
+    const totalRevenueResult = await prisma.transaction.aggregate({
+        _sum: {
+            amount: true,
+        },
+        where: {
+            type: 'revenue',
+        },
+    });
+    const totalRevenue = totalRevenueResult._sum.amount || 0;
 
-    const totalExpenses = transactions
-        .filter((t) => t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0);
+    const totalExpensesResult = await prisma.transaction.aggregate({
+        _sum: {
+            amount: true,
+        },
+        where: {
+            type: 'expense',
+        },
+    });
+    const totalExpenses = totalExpensesResult._sum.amount || 0;
 
-    const occupiedRooms = customers.filter((c) => c.roomNumber).length;
+    const occupiedRoomsCount = await prisma.customer.count({
+        where: {
+            roomNumber: {
+                not: null,
+            },
+        },
+    });
     const totalRooms = 10; // Assuming 10 rooms total for occupancy calculation
-    const occupancyRate = totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0;
-
-    const recentTransactions = [...transactions]
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .slice(0, 5);
-    const recentCustomers = [...customers]
-        .sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime())
-        .slice(0, 5);
+    const occupancyRate = totalRooms > 0 ? (occupiedRoomsCount / totalRooms) * 100 : 0;
     
+    const recentTransactions = await prisma.transaction.findMany({
+        take: 5,
+        orderBy: {
+            date: 'desc',
+        },
+    });
+
+    const recentCustomers = await prisma.customer.findMany({
+        take: 5,
+        orderBy: {
+            entryDate: 'desc',
+        },
+    });
+    
+    const customersCount = await prisma.customer.count();
+
     return {
         totalRevenue,
         totalExpenses,
-        occupiedRooms,
+        occupiedRooms: occupiedRoomsCount,
         totalRooms,
         occupancyRate,
-        recentTransactions,
-        recentCustomers,
-        customers,
+        recentTransactions: recentTransactions.map(t => ({...t, date: t.date.toISOString().split('T')[0]})),
+        recentCustomers: recentCustomers.map(c => ({...c, entryDate: c.entryDate.toISOString().split('T')[0]})),
+        customersCount,
     };
 }

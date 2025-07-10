@@ -1,5 +1,9 @@
-import { transactions } from "@/lib/data";
+import prisma from '@/lib/prisma';
 
-export function getTransactionsData() {
-    return transactions;
+export async function getTransactionsData() {
+    return prisma.transaction.findMany({
+        orderBy: {
+            date: 'desc'
+        }
+    });
 }

@@ -20,7 +20,7 @@ import { PageHeader } from '@/components/layout/page-header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { getDashboardData } from './dashboard.logic';
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
   const {
     totalRevenue,
     totalExpenses,
@@ -29,8 +29,8 @@ export default function DashboardPage() {
     occupancyRate,
     recentTransactions,
     recentCustomers,
-    customers,
-  } = getDashboardData();
+    customersCount,
+  } = await getDashboardData();
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -50,7 +50,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Active Customers"
-          value={`+${customers.length}`}
+          value={`+${customersCount}`}
           icon={Users}
           description="Total customers"
         />

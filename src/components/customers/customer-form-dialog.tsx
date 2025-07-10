@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useEffect } from "react";
+import { useEffect, useTransition } from "react";
+import { addCustomer, updateCustomer } from "@/app/customers/actions";
+import { useToast } from "@/hooks/use-toast";
 
 const customerFormSchema = z.object({
   id: z.string().optional(),
@@ -24,11 +26,13 @@ type CustomerFormValues = z.infer<typeof customerFormSchema>;
 type CustomerFormDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onSave: (customer: Customer) => void;
   customer?: Customer;
 };
 
-export function CustomerFormDialog({ isOpen, onOpenChange, onSave, customer }: CustomerFormDialogProps) {
+export function CustomerFormDialog({ isOpen, onOpenChange, customer }: CustomerFormDialogProps) {
+  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
+
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerFormSchema),
     defaultValues: customer || {
@@ -42,7 +46,10 @@ export function CustomerFormDialog({ isOpen, onOpenChange, onSave, customer }: C
 
   useEffect(() => {
     if (isOpen) {
-      const defaultValues = customer || {
+      const defaultValues = customer ? {
+        ...customer,
+        roomNumber: customer.roomNumber || ''
+       } : {
         name: "",
         phone: "",
         nik: "",
@@ -54,8 +61,20 @@ export function CustomerFormDialog({ isOpen, onOpenChange, onSave, customer }: C
   }, [customer, form, isOpen]);
 
   const onSubmit = (data: CustomerFormValues) => {
-    onSave(data as Customer);
-    onOpenChange(false);
+    startTransition(async () => {
+      try {
+        if (customer?.id) {
+          await updateCustomer(customer.id, data);
+          toast({ title: "Success", description: "Customer updated successfully." });
+        } else {
+          await addCustomer(data);
+          toast({ title: "Success", description: "Customer added successfully." });
+        }
+        onOpenChange(false);
+      } catch (error) {
+        toast({ variant: "destructive", title: "Error", description: "Something went wrong." });
+      }
+    });
   };
 
   return (
@@ -128,14 +147,16 @@ export function CustomerFormDialog({ isOpen, onOpenChange, onSave, customer }: C
                 <FormItem>
                   <FormLabel>Room Number (Optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. 101" {...field} />
+                    <Input placeholder="e.g. 101" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="submit">Save Customer</Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Saving..." : "Save Customer"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

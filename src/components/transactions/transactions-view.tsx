@@ -10,23 +10,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { TransactionsTable } from './transactions-table';
 import { TransactionFormDialog } from './transaction-form-dialog';
 
-export function TransactionsView({ transactions: initialTransactions }: { transactions: Transaction[] }) {
-  const [transactions, setTransactions] = useState(initialTransactions);
+export function TransactionsView({ transactions }: { transactions: Transaction[] }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const revenue = transactions.filter(t => t.type === 'revenue');
   const expenses = transactions.filter(t => t.type === 'expense');
-
-  const handleSaveTransaction = (transaction: Omit<Transaction, 'id'>) => {
-    setTransactions([...transactions, { ...transaction, id: `t${transactions.length + 1}` }]);
-  };
 
   return (
     <>
       <TransactionFormDialog 
         isOpen={isFormOpen}
         onOpenChange={setIsFormOpen}
-        onSave={handleSaveTransaction}
       />
       <div className="flex flex-col gap-4">
         <PageHeader 

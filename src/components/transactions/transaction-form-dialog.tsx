@@ -3,14 +3,15 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import type { Transaction } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEffect } from "react";
+import { useEffect, useTransition } from "react";
+import { addTransaction } from "@/app/transactions/actions";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   type: z.enum(["revenue", "expense"]),
@@ -41,12 +42,14 @@ type FormValues = z.infer<typeof formSchema>;
 type TransactionFormDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onSave: (transaction: Omit<Transaction, 'id' | 'customerName'>) => void;
 };
 
 const expenseCategories = ["Maintenance", "Utilities", "Capital", "Marketing", "Salaries"];
 
-export function TransactionFormDialog({ isOpen, onOpenChange, onSave }: TransactionFormDialogProps) {
+export function TransactionFormDialog({ isOpen, onOpenChange }: TransactionFormDialogProps) {
+  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -72,8 +75,15 @@ export function TransactionFormDialog({ isOpen, onOpenChange, onSave }: Transact
   }, [isOpen, form]);
 
   const onSubmit = (data: FormValues) => {
-    onSave(data);
-    onOpenChange(false);
+    startTransition(async () => {
+      try {
+        await addTransaction(data);
+        toast({ title: "Success", description: "Transaction added successfully." });
+        onOpenChange(false);
+      } catch (error) {
+        toast({ variant: "destructive", title: "Error", description: "Something went wrong." });
+      }
+    });
   };
 
   return (
@@ -149,7 +159,7 @@ export function TransactionFormDialog({ isOpen, onOpenChange, onSave }: Transact
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Room Number</FormLabel>
-                    <FormControl><Input placeholder="e.g. 101" {...field} /></FormControl>
+                    <FormControl><Input placeholder="e.g. 101" {...field} value={field.value ?? ''} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -192,7 +202,9 @@ export function TransactionFormDialog({ isOpen, onOpenChange, onSave }: Transact
             />
 
             <DialogFooter>
-              <Button type="submit">Save Transaction</Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Saving..." : "Save Transaction"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
