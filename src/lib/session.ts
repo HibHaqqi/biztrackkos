@@ -1,4 +1,5 @@
 import type { IronSessionOptions } from 'iron-session';
+import 'dotenv/config';
 
 export interface SessionData {
   userId: string;
