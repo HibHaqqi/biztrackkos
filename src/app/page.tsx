@@ -38,13 +38,13 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Revenue"
-          value={`$${totalRevenue.toLocaleString()}`}
+          value={`IDR ${totalRevenue.toLocaleString()}`}
           icon={DollarSign}
           description="All time revenue"
         />
         <StatCard
           title="Total Expenses"
-          value={`$${totalExpenses.toLocaleString()}`}
+          value={`IDR ${totalExpenses.toLocaleString()}`}
           icon={TrendingDown}
           description="All time expenses"
         />
@@ -96,7 +96,7 @@ export default async function DashboardPage() {
                       {transaction.description}
                     </TableCell>
                     <TableCell className="text-right">
-                      ${transaction.amount.toLocaleString()}
+                      IDR {transaction.amount.toLocaleString()}
                     </TableCell>
                   </TableRow>
                 ))}

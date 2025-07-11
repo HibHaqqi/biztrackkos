@@ -25,7 +25,7 @@ export function TransactionsTable({ transactions }: { transactions: Transaction[
             <TableCell>{transaction.date}</TableCell>
             <TableCell className="font-medium">{transaction.description}</TableCell>
             {isRevenue ? <TableCell>{transaction.roomNumber}</TableCell> : <TableCell><Badge variant="outline">{transaction.category}</Badge></TableCell>}
-            <TableCell className="text-right">${transaction.amount.toLocaleString()}</TableCell>
+            <TableCell className="text-right">IDR {transaction.amount.toLocaleString()}</TableCell>
           </TableRow>
         ))}
       </TableBody>
