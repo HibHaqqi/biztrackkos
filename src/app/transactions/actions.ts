@@ -1,8 +1,7 @@
 'use server';
 
+import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import { customers, transactions } from '@/lib/data';
-import type { Transaction } from '@/types';
 
 export async function addTransaction(data: {
   type: 'revenue' | 'expense';
@@ -14,26 +13,30 @@ export async function addTransaction(data: {
 }) {
   const { type, amount, date, description, category, roomNumber } = data;
 
-  let customerName: string | undefined = undefined;
+  let customerData = {};
   if (type === 'revenue' && roomNumber) {
-    const customer = customers.find(c => c.roomNumber === roomNumber);
+    const customer = await prisma.customer.findFirst({
+      where: { roomNumber },
+    });
     if (customer) {
-      customerName = customer.name;
+      customerData = {
+        customerName: customer.name,
+        customerId: customer.id,
+      };
     }
   }
 
-  const newTransaction: Transaction = {
-    id: String(transactions.length + 1),
-    type,
-    amount,
-    date,
-    description,
-    category: type === 'expense' ? category : undefined,
-    roomNumber: type === 'revenue' ? roomNumber : undefined,
-    customerName,
-  };
-
-  transactions.push(newTransaction);
+  await prisma.transaction.create({
+    data: {
+      type,
+      amount,
+      date: new Date(date),
+      description,
+      category: type === 'expense' ? category : undefined,
+      roomNumber: type === 'revenue' ? roomNumber : undefined,
+      ...customerData,
+    },
+  });
   
   revalidatePath('/transactions');
   revalidatePath('/');
