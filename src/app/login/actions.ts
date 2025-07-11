@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { revalidatePath } from 'next/cache';
+import { createSession } from '@/lib/session';
 
 const FAKE_USER = {
   email: 'admin@example.com',
@@ -17,12 +17,7 @@ export async function login(
   const password = formData.get('password') as string;
 
   if (email === FAKE_USER.email && password === FAKE_USER.password) {
-    cookies().set('session', 'true', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7, // One week
-      path: '/',
-    });
+    await createSession();
     // Redirect must be called outside of a try/catch block.
     redirect('/');
   }

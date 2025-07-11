@@ -1,9 +1,12 @@
 import type { Customer } from "@/types";
-import { customers, transactions } from '@/lib/data';
+import { getCustomers, getTransactions } from '@/lib/data';
 import { format } from 'date-fns';
 
 export async function getCustomersData(): Promise<Customer[]> {
-  const customersWithLastPayment = customers.map(customer => {
+  const customers = await getCustomers();
+  const transactions = await getTransactions();
+
+  const customersWithLastPayment = customers.map((customer: Customer) => {
     if (!customer.roomNumber) {
       return {
         ...customer,
@@ -12,8 +15,8 @@ export async function getCustomersData(): Promise<Customer[]> {
     }
     
     const lastPayment = transactions
-      .filter(t => t.type === 'revenue' && t.roomNumber === customer.roomNumber)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+      .filter((t: any) => t.type === 'revenue' && t.roomNumber === customer.roomNumber)
+      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
     return {
       ...customer,

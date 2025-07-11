@@ -3,6 +3,7 @@
 
 import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { login } from './actions';
@@ -66,6 +67,12 @@ export default function LoginPage() {
             </div>
             <SubmitButton />
           </form>
+          <div className="mt-4 text-center text-sm">
+            Don't have an account?{' '}
+            <Link href="/register" className="underline">
+              Register
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>

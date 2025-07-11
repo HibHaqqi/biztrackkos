@@ -9,6 +9,7 @@ export function middleware(request: NextRequest) {
 
   const isApiRoute = pathname.startsWith('/api');
   const isLoginPage = pathname === '/login';
+  const isRegisterPage = pathname === '/register';
   
   if (isApiRoute) {
     const apiKey = request.headers.get('x-api-key');
@@ -23,11 +24,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (!isLoggedIn && !isLoginPage) {
+  if (!isLoggedIn && !isLoginPage && !isRegisterPage) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
   
-  if (isLoggedIn && isLoginPage) {
+  if (isLoggedIn && (isLoginPage || isRegisterPage)) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 

@@ -1,2 +1,12 @@
-// This file is no longer used for sessions as we've moved to a simple cookie-based mock authentication.
-export {};
+'use server';
+
+import { cookies } from 'next/headers';
+
+export async function createSession() {
+  cookies().set('session', 'true', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 60 * 60 * 24 * 7, // One week
+    path: '/',
+  });
+}
