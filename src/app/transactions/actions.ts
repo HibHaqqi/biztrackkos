@@ -1,10 +1,7 @@
 'use server';
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-
-// Instantiate a new Prisma Client directly to bypass any potential caching issues with the shared instance.
-const prisma = new PrismaClient();
 
 async function updateRoomAndCustomer(roomNumber: string, date: string) {
   await prisma.room.update({
