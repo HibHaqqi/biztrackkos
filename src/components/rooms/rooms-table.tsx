@@ -1,42 +1,46 @@
 "use client";
 
-import type { Transaction } from '@/types';
+import type { Room } from '@/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal } from 'lucide-react';
 import { useState, useTransition } from 'react';
-import { TransactionFormDialog } from './transaction-form-dialog';
-import { deleteTransaction } from '@/app/transactions/actions';
+import { RoomFormDialog } from './room-form-dialog';
+import { deleteRoom } from '@/app/rooms/actions';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
-export function TransactionsTable({ transactions, rooms }: { transactions: Transaction[], rooms: Room[] }) {
+export function RoomsTable({ rooms }: { rooms: Room[] }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
-  const handleEdit = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
+  const handleAdd = () => {
+    setSelectedRoom(null);
     setIsFormOpen(true);
   };
 
-  const handleDelete = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
+  const handleEdit = (room: Room) => {
+    setSelectedRoom(room);
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = (room: Room) => {
+    setSelectedRoom(room);
     setIsAlertOpen(true);
   };
 
   const confirmDelete = () => {
-    if (selectedTransaction) {
+    if (selectedRoom) {
       startTransition(async () => {
         try {
-          await deleteTransaction(selectedTransaction.id);
-          toast({ title: "Success", description: "Transaction deleted successfully." });
+          await deleteRoom(selectedRoom.id);
+          toast({ title: "Success", description: "Room deleted successfully." });
           setIsAlertOpen(false);
-          setSelectedTransaction(null);
+          setSelectedRoom(null);
         } catch (error) {
           toast({ variant: "destructive", title: "Error", description: "Something went wrong." });
         }
@@ -44,31 +48,24 @@ export function TransactionsTable({ transactions, rooms }: { transactions: Trans
     }
   };
   
-  if (transactions.length === 0) {
-    return <div className="text-center text-muted-foreground py-8">No transactions found.</div>;
-  }
-  
-  const isRevenue = transactions[0]?.type === 'revenue';
-
   return (
     <>
+      <div className="flex justify-end mb-4">
+        <Button onClick={handleAdd}>Add Room</Button>
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Date</TableHead>
-            <TableHead>Description</TableHead>
-            {isRevenue ? <TableHead>Room</TableHead> : <TableHead>Category</TableHead>}
-            <TableHead className="text-right">Amount</TableHead>
+            <TableHead>Room Number</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {transactions.map(transaction => (
-            <TableRow key={transaction.id}>
-              <TableCell>{transaction.date}</TableCell>
-              <TableCell className="font-medium">{transaction.description}</TableCell>
-              {isRevenue ? <TableCell>{transaction.roomNumber}</TableCell> : <TableCell><Badge variant="outline">{transaction.category}</Badge></TableCell>}
-              <TableCell className="text-right">IDR {transaction.amount.toLocaleString()}</TableCell>
+          {rooms.map(room => (
+            <TableRow key={room.id}>
+              <TableCell className="font-medium">{room.roomNumber}</TableCell>
+              <TableCell>{room.status}</TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -78,8 +75,8 @@ export function TransactionsTable({ transactions, rooms }: { transactions: Trans
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleEdit(transaction)}>Edit</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDelete(transaction)} className="text-red-600">Delete</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEdit(room)}>Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDelete(room)} className="text-red-600">Delete</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -87,18 +84,17 @@ export function TransactionsTable({ transactions, rooms }: { transactions: Trans
           ))}
         </TableBody>
       </Table>
-      <TransactionFormDialog
-        isOpen={isFormOpen}
+      <RoomFormDialog 
+        isOpen={isFormOpen} 
         onOpenChange={setIsFormOpen}
-        transaction={selectedTransaction}
-        rooms={rooms}
+        room={selectedRoom}
       />
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the transaction.
+              This action cannot be undone. This will permanently delete the room.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

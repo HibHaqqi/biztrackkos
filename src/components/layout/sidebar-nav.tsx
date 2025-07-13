@@ -16,6 +16,7 @@ const links = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/transactions", label: "Transactions", icon: Receipt },
+  { href: "/rooms", label: "Rooms", icon: Building },
 ];
 
 export function SidebarNav() {

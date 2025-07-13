@@ -10,8 +10,10 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useTransition } from "react";
-import { addTransaction } from "@/app/transactions/actions";
+import { addTransaction, updateTransaction } from "@/app/transactions/actions";
 import { useToast } from "@/hooks/use-toast";
+import type { Room } from "@/types";
+import type { Transaction } from "@/types";
 
 const formSchema = z.object({
   type: z.enum(["revenue", "expense"]),
@@ -21,16 +23,16 @@ const formSchema = z.object({
   category: z.string().optional(),
   roomNumber: z.string().optional(),
 }).superRefine((data, ctx) => {
-  if (data.type === 'expense' && !data.category) {
+  if (data.type === 'expense' && (!data.category || data.category.length === 0)) {
     ctx.addIssue({
-      code: "custom",
+      code: z.ZodIssueCode.custom,
       path: ["category"],
       message: "Category is required for expenses.",
     });
   }
-  if (data.type === 'revenue' && !data.roomNumber) {
+  if (data.type === 'revenue' && (!data.roomNumber || data.roomNumber.length === 0)) {
     ctx.addIssue({
-      code: "custom",
+      code: z.ZodIssueCode.custom,
       path: ["roomNumber"],
       message: "Room number is required for revenue.",
     });
@@ -42,11 +44,13 @@ type FormValues = z.infer<typeof formSchema>;
 type TransactionFormDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  transaction?: Transaction | null;
+  rooms: Room[];
 };
 
 const expenseCategories = ["Maintenance", "Utilities", "Capital", "Marketing", "Salaries"];
 
-export function TransactionFormDialog({ isOpen, onOpenChange }: TransactionFormDialogProps) {
+export function TransactionFormDialog({ isOpen, onOpenChange, transaction, rooms }: TransactionFormDialogProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
@@ -62,23 +66,37 @@ export function TransactionFormDialog({ isOpen, onOpenChange }: TransactionFormD
   const transactionType = form.watch("type");
 
   useEffect(() => {
-    if(isOpen) {
-      form.reset({
-        type: "revenue",
-        date: new Date().toISOString().split('T')[0],
-        description: "",
-        amount: undefined,
-        category: undefined,
-        roomNumber: undefined,
-      });
+    if (isOpen) {
+      if (transaction) {
+        form.reset({
+          ...transaction,
+          date: new Date(transaction.date).toISOString().split('T')[0],
+          category: transaction.category ?? '',
+          roomNumber: transaction.roomNumber ?? '',
+        });
+      } else {
+        form.reset({
+          type: "revenue",
+          date: new Date().toISOString().split('T')[0],
+          description: "",
+          amount: undefined,
+          category: '',
+          roomNumber: '',
+        });
+      }
     }
-  }, [isOpen, form]);
+  }, [isOpen, form, transaction]);
 
   const onSubmit = (data: FormValues) => {
     startTransition(async () => {
       try {
-        await addTransaction(data);
-        toast({ title: "Success", description: "Transaction added successfully." });
+        if (transaction) {
+          await updateTransaction(transaction.id, data);
+          toast({ title: "Success", description: "Transaction updated successfully." });
+        } else {
+          await addTransaction(data);
+          toast({ title: "Success", description: "Transaction added successfully." });
+        }
         onOpenChange(false);
       } catch (error) {
         toast({ variant: "destructive", title: "Error", description: "Something went wrong." });
@@ -90,7 +108,7 @@ export function TransactionFormDialog({ isOpen, onOpenChange }: TransactionFormD
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New Transaction</DialogTitle>
+          <DialogTitle>{transaction ? 'Edit Transaction' : 'Add New Transaction'}</DialogTitle>
           <DialogDescription>
             Select transaction type and fill in the details.
           </DialogDescription>
@@ -134,7 +152,7 @@ export function TransactionFormDialog({ isOpen, onOpenChange }: TransactionFormD
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Description</FormLabel>
-                  <FormControl><Input placeholder="e.g. Monthly Rent" {...field} /></FormControl>
+                  <FormControl><Input placeholder="e.g. Monthly Rent" {...field} value={field.value ?? ''} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -146,7 +164,7 @@ export function TransactionFormDialog({ isOpen, onOpenChange }: TransactionFormD
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Amount (IDR)</FormLabel>
-                  <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl>
+                  <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} value={field.value ?? ''} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -159,7 +177,16 @@ export function TransactionFormDialog({ isOpen, onOpenChange }: TransactionFormD
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Room Number</FormLabel>
-                    <FormControl><Input placeholder="e.g. 101" {...field} value={field.value ?? ''} /></FormControl>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a room" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {rooms && rooms.map(room => <SelectItem key={room.id} value={room.roomNumber}>{room.roomNumber}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -173,7 +200,7 @@ export function TransactionFormDialog({ isOpen, onOpenChange }: TransactionFormD
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a category" />
@@ -203,7 +230,7 @@ export function TransactionFormDialog({ isOpen, onOpenChange }: TransactionFormD
 
             <DialogFooter>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Saving..." : "Save Transaction"}
+                {isPending ? "Saving..." : (transaction ? "Save Changes" : "Save Transaction")}
               </Button>
             </DialogFooter>
           </form>

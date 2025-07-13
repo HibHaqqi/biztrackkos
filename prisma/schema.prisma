@@ -3,7 +3,6 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["dataProxy"]
 }
 
 datasource db {
@@ -18,6 +17,7 @@ model Customer {
   nik         String        @unique
   entryDate   DateTime
   roomNumber  String?
+  lastPayment DateTime?
   Transaction Transaction[]
 }
 
@@ -34,6 +34,13 @@ model Transaction {
   customerName String?
   customerId   String?
   customer     Customer? @relation(fields: [customerId], references: [id])
+}
+
+model Room {
+  id          String    @id @default(cuid())
+  roomNumber  String    @unique
+  status      String // "occupied" or "vacant"
+  lastPayment DateTime?
 }
 
 model User {

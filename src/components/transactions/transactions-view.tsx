@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import type { Transaction } from '@/types';
+import type { Transaction, Room } from '@/types';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/page-header';
@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { TransactionsTable } from './transactions-table';
 import { TransactionFormDialog } from './transaction-form-dialog';
 
-export function TransactionsView({ transactions }: { transactions: Transaction[] }) {
+export function TransactionsView({ transactions, rooms }: { transactions: Transaction[], rooms: Room[] }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const revenue = transactions.filter(t => t.type === 'revenue');
@@ -21,6 +21,7 @@ export function TransactionsView({ transactions }: { transactions: Transaction[]
       <TransactionFormDialog 
         isOpen={isFormOpen}
         onOpenChange={setIsFormOpen}
+        rooms={rooms}
       />
       <div className="flex flex-col gap-4">
         <PageHeader 
@@ -44,7 +45,7 @@ export function TransactionsView({ transactions }: { transactions: Transaction[]
                 <CardDescription>All incoming revenue transactions.</CardDescription>
               </CardHeader>
               <CardContent>
-                <TransactionsTable transactions={revenue} />
+                <TransactionsTable transactions={revenue} rooms={rooms} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -55,7 +56,7 @@ export function TransactionsView({ transactions }: { transactions: Transaction[]
                 <CardDescription>All outgoing expense transactions.</CardDescription>
               </CardHeader>
               <CardContent>
-                <TransactionsTable transactions={expenses} />
+                <TransactionsTable transactions={expenses} rooms={rooms} />
               </CardContent>
             </Card>
           </TabsContent>
