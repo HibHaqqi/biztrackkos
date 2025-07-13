@@ -39,9 +39,12 @@ export async function addTransaction(data: {
 }) {
   const { type, amount, date, description, category, roomNumber } = data;
 
-  let customerData = {};
+  let customerData: { customerId?: string; customerName?: string } = {};
   if (type === 'revenue' && roomNumber) {
-    customerData = await updateRoomAndCustomer(roomNumber, date);
+    const customerInfo = await updateRoomAndCustomer(roomNumber, date);
+    if (customerInfo.customerId && customerInfo.customerName) {
+      customerData = customerInfo;
+    }
   }
 
   await prisma.transaction.create({
@@ -52,7 +55,10 @@ export async function addTransaction(data: {
       description,
       category: type === 'expense' ? category : undefined,
       roomNumber: type === 'revenue' ? roomNumber : undefined,
-      ...customerData,
+      ...(customerData.customerId && { customerId: customerData.customerId }),
+      ...(customerData.customerName && {
+        customerName: customerData.customerName,
+      }),
     },
   });
 
@@ -72,9 +78,12 @@ export async function updateTransaction(id: string, data: {
 }) {
   const { type, amount, date, description, category, roomNumber } = data;
 
-  let customerData = {};
+  let customerData: { customerId?: string; customerName?: string } = {};
   if (type === 'revenue' && roomNumber) {
-    customerData = await updateRoomAndCustomer(roomNumber, date);
+    const customerInfo = await updateRoomAndCustomer(roomNumber, date);
+    if (customerInfo.customerId && customerInfo.customerName) {
+      customerData = customerInfo;
+    }
   }
 
   await prisma.transaction.update({
@@ -86,7 +95,10 @@ export async function updateTransaction(id: string, data: {
       description,
       category: type === 'expense' ? category : undefined,
       roomNumber: type === 'revenue' ? roomNumber : undefined,
-      ...customerData,
+      ...(customerData.customerId && { customerId: customerData.customerId }),
+      ...(customerData.customerName && {
+        customerName: customerData.customerName,
+      }),
     },
   });
 

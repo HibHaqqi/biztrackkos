@@ -68,7 +68,7 @@ export function TransactionsTable({ transactions, rooms }: { transactions: Trans
               <TableCell>{transaction.date}</TableCell>
               <TableCell className="font-medium">{transaction.description}</TableCell>
               {isRevenue ? <TableCell>{transaction.roomNumber}</TableCell> : <TableCell><Badge variant="outline">{transaction.category}</Badge></TableCell>}
-              <TableCell className="text-right">IDR {transaction.amount.toLocaleString()}</TableCell>
+              <TableCell className="text-right">IDR {transaction.amount.toLocaleString('id-ID')}</TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

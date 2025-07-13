@@ -28,5 +28,10 @@ export async function getTransactions() {
 
 export async function getRooms() {
   const rooms = await prisma.room.findMany();
-  return rooms;
+  return rooms.map((room) => ({
+    ...room,
+    lastPayment: room.lastPayment
+      ? format(new Date(room.lastPayment), 'yyyy-MM-dd')
+      : null,
+  }));
 }
