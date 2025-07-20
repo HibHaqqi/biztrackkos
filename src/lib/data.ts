@@ -1,9 +1,16 @@
 import prisma from './db';
 import { format } from 'date-fns';
 import type { Customer, Transaction } from '@/types';
+import { getSession } from './session';
 
 export async function getCustomers() {
-  const customers = await prisma.customer.findMany();
+  const session = await getSession();
+  if (!session?.userId) {
+    return [];
+  }
+  const customers = await prisma.customer.findMany({
+    where: { userId: session.userId },
+  });
   return customers.map((customer) => ({
     ...customer,
     entryDate: format(new Date(customer.entryDate), 'yyyy-MM-dd'),
@@ -11,7 +18,12 @@ export async function getCustomers() {
 }
 
 export async function getTransactions() {
+  const session = await getSession();
+  if (!session?.userId) {
+    return [];
+  }
   const transactions = await prisma.transaction.findMany({
+    where: { userId: session.userId },
     orderBy: {
       date: 'desc',
     },
@@ -27,7 +39,13 @@ export async function getTransactions() {
 }
 
 export async function getRooms() {
-  const rooms = await prisma.room.findMany();
+  const session = await getSession();
+  if (!session?.userId) {
+    return [];
+  }
+  const rooms = await prisma.room.findMany({
+    where: { userId: session.userId },
+  });
   return rooms.map((room) => ({
     ...room,
     lastPayment: room.lastPayment

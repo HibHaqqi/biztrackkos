@@ -18,7 +18,7 @@ export async function login(
   });
 
   if (user && (await bcrypt.compare(password, user.password))) {
-    await createSession();
+    await createSession(user.id);
     // Redirect must be called outside of a try/catch block.
     redirect('/');
   }

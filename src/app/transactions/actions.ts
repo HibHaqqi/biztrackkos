@@ -29,6 +29,8 @@ async function updateRoomAndCustomer(roomNumber: string, date: string) {
   return {};
 }
 
+import { getSession } from '@/lib/session';
+
 export async function addTransaction(data: {
   type: 'revenue' | 'expense';
   amount: number;
@@ -38,6 +40,11 @@ export async function addTransaction(data: {
   roomNumber?: string;
 }) {
   const { type, amount, date, description, category, roomNumber } = data;
+  const session = await getSession();
+  if (!session?.userId) {
+    throw new Error('Unauthorized');
+  }
+  const userId = session.userId;
 
   let customerData: { customerId?: string; customerName?: string } = {};
   if (type === 'revenue' && roomNumber) {
@@ -59,6 +66,7 @@ export async function addTransaction(data: {
       ...(customerData.customerName && {
         customerName: customerData.customerName,
       }),
+      userId,
     },
   });
 
@@ -77,6 +85,11 @@ export async function updateTransaction(id: string, data: {
   roomNumber?: string;
 }) {
   const { type, amount, date, description, category, roomNumber } = data;
+  const session = await getSession();
+  if (!session?.userId) {
+    throw new Error('Unauthorized');
+  }
+  const userId = session.userId;
 
   let customerData: { customerId?: string; customerName?: string } = {};
   if (type === 'revenue' && roomNumber) {
@@ -87,7 +100,7 @@ export async function updateTransaction(id: string, data: {
   }
 
   await prisma.transaction.update({
-    where: { id },
+    where: { id, userId },
     data: {
       type,
       amount,
@@ -109,8 +122,14 @@ export async function updateTransaction(id: string, data: {
 }
 
 export async function deleteTransaction(id: string) {
+  const session = await getSession();
+  if (!session?.userId) {
+    throw new Error('Unauthorized');
+  }
+  const userId = session.userId;
+
   const transaction = await prisma.transaction.findUnique({
-    where: { id },
+    where: { id, userId },
   });
 
   if (!transaction) {
@@ -118,7 +137,7 @@ export async function deleteTransaction(id: string) {
   }
 
   await prisma.transaction.delete({
-    where: { id },
+    where: { id, userId },
   });
 
   if (transaction.type === 'revenue' && transaction.roomNumber) {
