@@ -49,6 +49,13 @@ export default async function DashboardPage() {
           description="All time expenses"
         />
         <StatCard
+          title="Net Result"
+          value={`IDR ${(totalRevenue - totalExpenses).toLocaleString()}`}
+          icon={TrendingUp}
+          description="Revenue - Expenses"
+      
+        />
+        <StatCard
           title="Active Customers"
           value={`+${customersCount}`}
           icon={Users}
